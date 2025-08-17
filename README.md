@@ -13,7 +13,11 @@
 
 > 把刚刚下载的三个文件移动并替换掉gg私有目录下
 > \
-(比如：`/data/user/0/com.apocalua.run/files/AppHidden-85uS/`这个目录下)
+(比如：
+> \
+`/data/user/0/com.apocalua.run/files/AppHidden-85uS/`
+> \
+这个目录下)
 > \
 每个gg包名不同，目录文件夹名称也不同，勿钻牛角尖。
 
