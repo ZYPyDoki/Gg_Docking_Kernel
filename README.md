@@ -5,8 +5,8 @@
 
 ## 编译完成品使用方法步骤
 
-- 下载
-`lib5.so和lib5.so.primary和libKernelGg.so`
+- 下载\
+`lib5.so和lib5.so.primary和libKernelGg.so`\
 这三个文件
 
 > 把刚刚下载的三个文件移动并替换掉gg私有目录下
