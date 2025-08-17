@@ -1,0 +1,3 @@
+#!/bin/sh
+export LD_PRELOAD="$(dirname "$0")/libKernelGg.so"
+exec "$0.primary" "$@"
