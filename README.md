@@ -53,3 +53,14 @@ make
 ## 关于原理
 
 - 来源enen大牛的思路，在gg修改器加载文件读写so库`lib5.so`之前，先加载一个共享库，加载完再加载原文件读写库`lib5.so`。从而实现hook syscall系统调用号270，替换gg的文件读写so库`lib5.so`的读为内核驱动读方式。
+
+
+
+
+## 正确安装ndk过程
+
+- 视频：`https://b23.tv/ljTKIDV`
+> 一键安装命令如下：
+```sh
+cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-ndk-r28c-aarch64-linux-android.tar.xz && mkdir android-ndk && mkdir android-ndk/ndk && mv android-ndk-r28c 28.2.13676358 && mv 28.2.13676358 android-ndk/ndk/ && ln -s $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64 && ln -s $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-x86_64 && echo 'Installation Finished. Ndk has been installed successfully!'
+```
