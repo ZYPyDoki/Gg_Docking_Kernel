@@ -418,13 +418,10 @@ long my_syscall(long number, long arg1, long arg2, long arg3, long arg4, long ar
             size_t size = local_iov[i].iov_len;
 
             // 使用驱动读取内存
-            if (driver->read(remote_addr, local_buffer, size)) {
-                total_read += size;
-            } else {
-                LOGE("读取失败: addr=0x%lx, size=%zu", remote_addr, size);
-                break;
-            }
-        }
+			         driver->read(remote_addr, local_buffer, size);
+			         //LOGE("读取成功: addr=0x%lx, size=%zu", remote_addr, size);
+			         total_read += size;
+		      }
         return total_read;
     }
     // 其他系统调用保持原样
