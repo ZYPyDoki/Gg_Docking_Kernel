@@ -1,6 +1,6 @@
 # Gg_Docking_Kernel
 
-- 使gg对接内核驱动，实现内核读取内存，过大部分的搜索检测
+- 使gg修改器对接内核驱动，实现内核读取内存，过大部分的搜索检测
 
 
 ## 编译完成品使用方法步骤
@@ -11,7 +11,7 @@
 `libKernelGg.so`\
 这三个文件
 
-> 把刚刚下载的三个文件移动并替换掉gg私有目录下
+> 把刚刚下载的三个文件移动并替换掉gg修改器私有目录下
 > \
 (比如：
 > \
@@ -19,7 +19,7 @@
 > \
 这个目录下)
 > \
-每个gg包名不同，目录文件夹名称也不同，勿钻牛角尖。
+每个gg修改器包名不同，目录文件夹名称也不同，勿钻牛角尖。
 
 
 
@@ -64,3 +64,16 @@ make
 ```sh
 cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-ndk-r28c-aarch64-linux-android.tar.xz && mkdir android-ndk && mkdir android-ndk/ndk && mv android-ndk-r28c 28.2.13676358 && mv 28.2.13676358 android-ndk/ndk/ && ln -s $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64 && ln -s $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-x86_64 && echo 'Installation Finished. Ndk has been installed successfully!'
 ```
+
+
+
+
+## 注意事项
+- 内核GT版驱动需要解压出来到根目录路径下
+> ｀比如/data/local/｀并给予777执行权限root0所有者用户组才可以执行，而不是图省事在压缩包里面执行。图省事只会导致load.sh找不到.ko文件从而提示刷入失败报错。
+
+- 替换后要注意文件权限之类的内容
+> 比如777权限，比如所有者用户组要改成gg自己的用户组。目的是让gg修改器这个APP知道这是属于他的而不是属于别人的，给予ta绝对的安全感归属感。
+
+- 96版的so和101版本的so不一样
+> 我演示的是用的96版本的so内存库，如果你想要改101版本的gg修改器，那么就需要把未替换前101版本的gg修改器私有目录下原本的lib5.so改成lib5.so.primary后替换掉我演示的lib5.so.primary文件
