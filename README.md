@@ -2,16 +2,17 @@
 
 - 使gg修改器对接内核驱动，实现内核读取内存，过大部分的搜索检测
 
+## 各种可对接的驱动
+1.KPM-KMA-RW-DRIVER：内核管理器可用的内核模块(硬件读取)
+2.driverGT1_567RTdev：GT驱动和RT驱动这两者的dev方案(兼容性高)
+3.driverGT2_12RThook：GT驱动和RT驱动这两者的hook方案(隐秘性高)
+4.driverDitNetlink_Prohook：吃坤挂哥巴巴托斯连理枝自用驱动
 
 ## 编译完成品使用方法步骤
 
-- 下载\
-`lib5.so`\
-`lib5.so.primary`\
-`libKernelGg.so`\
-这三个文件
+- 进入`Compiled_finished_product`文件夹后找到你想要用的对应驱动名称文件夹
 
-> 把刚刚下载的三个文件移动并替换掉gg修改器私有目录下
+> 把文件夹内全部内容移动并替换掉gg修改器私有目录下
 > \
 (比如：
 > \
@@ -25,29 +26,25 @@
 
 ## 如何自行编译这个项目
 
-- 首先准备好cmake环境
+- 首先准备好android-ndk环境
 
 > 第一步：\
-> 把项目打包下载解压到一个空文件目录下\
-把`CMakeLists.txt`文件中的`/data/user/0/com.termux/files/home/android-sdk/ndk/27.1.12297006`替换成你的ndk安装目录
+> 把项目对应驱动文件夹源码下载解压到一个空文件目录下\
+把`build.sh`文件中的`/data/user/0/com.termux/files/home/android-ndk/ndk/29.0.14206865/ndk-build`替换成你的ndk-build安装所在目录
 
 > 第二步：\
-`cd `+文件夹路径 进入该目录
+`cd`+文件夹路径 进入该目录
 
 
 > 第三步：\
-cmake初始化生成构建文件
+执行sh文件开始编译
 ```sh
-cmake .
+./build.sh
 ```
 
 
 > 最后一步：\
-make执行构建项目，等待项目构建完成就会在该文件目录下生成`libKernelGg.so`文件了
-```sh
-make
-```
-
+等待提示项目编译完成就会在build.sh所在文件目录/libs/arm64-v8a/下生成编译完成的`libKernelGg.so`文件了
 
 
 ## 关于原理
@@ -76,4 +73,6 @@ cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-n
 > 比如777权限，比如所有者用户组要改成gg自己的用户组。目的是让gg修改器这个APP知道这是属于他的而不是属于别人的，给予ta绝对的安全感归属感。
 
 - 96版的so和101版本的so不一样
-> 我演示的是用的96版本的so内存库，如果你想要改101版本的gg修改器，那么就需要把未替换前101版本的gg修改器私有目录下原本的lib5.so改成lib5.so.primary后替换掉我演示的lib5.so.primary文件
+> 我演示的是用的96版本的so内存库，如果你想要改101版本的gg修改器，那么就需要在本项目的101version文件夹下找到lib5.so.primary后替换掉我演示的96版本的lib5.so.primary文件。
+> 96版本的lib5.so.primary文件大小是3.9mb左右
+> 101版本的lib5.so.primary文件大小是4.4mb左右
