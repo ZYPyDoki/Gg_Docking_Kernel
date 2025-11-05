@@ -11,7 +11,7 @@
 | `KPM-KMA-RW-DRIVER` | 内核管理器可用的内核模块 | 硬件级读取 |
 | `driverGT1_567RTdev` | GT 驱动和 RT 驱动的 dev 方案 | 兼容性高 |
 | `driverGT2_12RThook` | GT 驱动和 RT 驱动的 hook 方案 | 隐秘性高 |
-| `driverDitNetlink_Prohook` | 定制化专用驱动 | 专业定制 |
+| `driverDitNetlink_Prohook` | 巴巴托斯连理枝驱动 | 吃坤挂哥爱用 |
 ---
 ## 🛠️ 使用已编译版本
 1.  进入 `Compiled_finished_product` 文件夹。
