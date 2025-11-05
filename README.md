@@ -1,78 +1,70 @@
-# Gg_Docking_Kernel
 
-- 使gg修改器对接内核驱动，实现内核读取内存，过大部分的搜索检测
-
-## 各种可对接的驱动
-1.KPM-KMA-RW-DRIVER：内核管理器可用的内核模块(硬件读取)
-2.driverGT1_567RTdev：GT驱动和RT驱动这两者的dev方案(兼容性高)
-3.driverGT2_12RThook：GT驱动和RT驱动这两者的hook方案(隐秘性高)
-4.driverDitNetlink_Prohook：吃坤挂哥巴巴托斯连理枝自用驱动
-
-## 编译完成品使用方法步骤
-
-- 进入`Compiled_finished_product`文件夹后找到你想要用的对应驱动名称文件夹
-
-> 把文件夹内全部内容移动并替换掉gg修改器私有目录下
-> \
-(比如：
-> \
-`/data/user/0/com.apocalua.run/files/AppHidden-85uS/`
-> \
-这个目录下)
-> \
-每个gg修改器包名不同，目录文件夹名称也不同，勿钻牛角尖。
+**Language**: [English.md](README_EN.md)
 
 
-
-## 如何自行编译这个项目
-
-- 首先准备好android-ndk环境
-
-> 第一步：\
-> 把项目对应驱动文件夹源码下载解压到一个空文件目录下\
-把`build.sh`文件中的`/data/user/0/com.termux/files/home/android-ndk/ndk/29.0.14206865/ndk-build`替换成你的ndk-build安装所在目录
-
-> 第二步：\
-`cd`+文件夹路径 进入该目录
-
-
-> 第三步：\
-执行sh文件开始编译
-```sh
-./build.sh
-```
-
-
-> 最后一步：\
-等待提示项目编译完成就会在build.sh所在文件目录/libs/arm64-v8a/下生成编译完成的`libKernelGg.so`文件了
-
-
-## 关于原理
-
-- 来源enen大牛的思路，在gg修改器加载文件读写so库`lib5.so`之前，先加载一个共享库，加载完再加载原文件读写库`lib5.so`。从而实现hook syscall系统调用号270，替换gg的文件读写so库`lib5.so`的读为内核驱动读方式。
-
-
-
-
-## 正确安装ndk过程
-
-- 视频：`https://b23.tv/ljTKIDV`
-> 一键安装命令如下：
+# 🚀 Gg_Docking_Kernel
+> 使 GG 修改器对接内核驱动，实现内核级内存读取，绕过大部分内存搜索检测。
+---
+## 📦 支持的驱动类型
+| 驱动名称 | 描述 | 特点 |
+| :--- | :--- | :--- |
+| `KPM-KMA-RW-DRIVER` | 内核管理器可用的内核模块 | 硬件级读取 |
+| `driverGT1_567RTdev` | GT 驱动和 RT 驱动的 dev 方案 | 兼容性高 |
+| `driverGT2_12RThook` | GT 驱动和 RT 驱动的 hook 方案 | 隐秘性高 |
+| `driverDitNetlink_Prohook` | 定制化专用驱动 | 专业定制 |
+---
+## 🛠️ 使用已编译版本
+1.  进入 `Compiled_finished_product` 文件夹。
+2.  找到您想使用的驱动对应的文件夹。
+3.  将该文件夹内的**全部内容**移动并替换到 GG 修改器的私有目录下。
+    **示例路径：**
+    ```
+    /data/user/0/com.apocalua.run/files/AppHidden-85uS/
+    ```
+> **⚠️ 注意**：每个 GG 修改器的包名不同，其私有目录的名称也可能不同。
+---
+## 🔨 自行编译项目
+### 📋 环境准备
+-   准备好 Android NDK 环境。
+### 📝 编译步骤
+**第一步：准备源码**
+-   将项目对应驱动的源码文件夹下载并解压到一个空目录下。
+-   修改 `build.sh` 文件中的 NDK 路径，将其替换为您本机的 `ndk-build` 所在目录。
+    **示例：**
+    ```sh
+    # 将此路径
+    /data/user/0/com.termux/files/home/android-ndk/ndk/29.0.14206865/ndk-build
+    # 替换为你的路径，例如：
+    /home/user/android-ndk/ndk/25.2.9519653/ndk-build
+    ```
+**第二步：进入目录**
+-   使用 `cd` 命令进入源码目录。
+    ```sh
+    cd /path/to/your/source/folder
+    ```
+**第三步：执行编译**
+-   运行编译脚本。
+    ```sh
+    ./build.sh
+    ```
+**最后一步：获取成果**
+-   等待提示“项目编译完成”。编译产物 `libKernelGg.so` 将生成在 `build.sh` 所在目录的 `libs/arm64-v8a/` 文件夹下。
+---
+## 💡 实现原理
+> 来源：enen 大牛的思路。
+>
+> 在 GG 修改器加载其原生文件读写库 `lib5.so` 之前，抢先加载一个我们准备的共享库。加载完毕后，再让 GG 加载其原始的 `lib5.so`。通过这种方式，我们能够 **Hook 系统调用号 270**，从而将 `lib5.so` 中的文件读取操作，替换为通过内核驱动进行读取的方式。
+---
+## 📚 NDK 安装指南
+**视频教程：** [https://b23.tv/ljTKIDV](https://b23.tv/ljTKIDV)
+**一键安装命令 (适用于 aarch64 架构的 Linux)：**
 ```sh
 cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-ndk-r28c-aarch64-linux-android.tar.xz && mkdir android-ndk && mkdir android-ndk/ndk && mv android-ndk-r28c 28.2.13676358 && mv 28.2.13676358 android-ndk/ndk/ && ln -s $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64 && ln -s $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-x86_64 && echo 'Installation Finished. Ndk has been installed successfully!'
 ```
-
-
-
-
-## 注意事项
-- 内核GT版驱动需要解压出来到根目录路径下
-> ｀比如/data/local/｀并给予777执行权限root0所有者用户组才可以执行，而不是图省事在压缩包里面执行。图省事只会导致load.sh找不到.ko文件从而提示刷入失败报错。
-
-- 替换后要注意文件权限之类的内容
-> 比如777权限，比如所有者用户组要改成gg自己的用户组。目的是让gg修改器这个APP知道这是属于他的而不是属于别人的，给予ta绝对的安全感归属感。
-
-- 96版的so和101版本的so不一样
-> 我演示的是用的96版本的so内存库，如果你想要改101版本的gg修改器，那么就需要在本项目的101version文件夹下找到lib5.so.primary后替换掉我演示的96版本的lib5.so.primary文件。
-> 96版本的lib5.so.primary文件大小是3.9mb左右
-> 101版本的lib5.so.primary文件大小是4.4mb左右
+---
+## ⚠️ 重要注意事项
+-   **内核 GT 版驱动**：需要将驱动文件解压到根目录（如 `/data/local/`），并授予 `777` 执行权限，同时将所有者和用户组设置为 `root:0`。
+-   **文件权限**：替换文件后，务必将文件权限设置为 `777`，并将所有者用户组改为 GG 修改器自己的用户组。
+-   **版本区别**：
+    -   **96 版**：`lib5.so.primary` 文件大小约为 **3.9 MB**。
+    -   **101 版**：需要在本项目的 `101version` 文件夹下找到 `lib5.so.primary` 进行替换，文件大小约为 **4.4 MB**。
