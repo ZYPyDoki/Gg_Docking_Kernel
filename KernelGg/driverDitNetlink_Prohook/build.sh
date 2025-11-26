@@ -29,7 +29,7 @@ fi
 if [[ -f $path/libs/arm64-v8a/libKernelGg.so ]]
 then
     cp -fp $path/libzy/* $path/libs/arm64-v8a/
+    echo -e "$(tput setaf 2)libKernelGg.so编译成功\n存放目录：$path/libs/arm64-v8a/路径下$(tput sgr0)\n"
+else
+    echo "编译失败"
 fi
-
-
-echo -e "$(tput setaf 2)libKernelGg.so编译成功\n存放目录：$path/libs/arm64-v8a/路径下$(tput sgr0)"
