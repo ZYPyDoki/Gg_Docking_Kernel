@@ -15,7 +15,7 @@ class Driver
     // 构造函数
 	Driver()	
 	{
-		initkey("9f901cbe824024832a02903f2d46dcd22a5531361a7856ac4be3cf7713879f8a2f39de19");
+		initkey("c6e5897e189076c420f75a6a358c04dd5c610b1c0db161a6892acd2e114572b5443473dc");
 	}
 	
     // 构析函数
@@ -39,16 +39,19 @@ class Driver
 	// 重载方法，获取进程pid，传入进程(包名)，comm字段，适用于获取线程pid、以及部分混淆包名的应用，从内核层安全获取pid
 	pid_t get_pid(char *name, char *comm);
 	
-	// 获取模块地址，传入pid、模块名，从内核层安全获取模块地址，支持多线程
-	uintptr_t get_module_base(pid_t pid, char *name);
+	// 获取模块地址，传入pid、接收指针、模块名，从内核层安全获取模块地址，支持多线程
+	bool get_module_base(pid_t pid, void *buffer, char *name);
 	
-	// 获取模块地址，传入pid、模块名、模块(长度)大小，从内核层安全获取模块地址，支持多线程
-	uintptr_t get_module_base(pid_t pid, char *name, size_t size);
+	// 获取模块地址，传入pid、接收指针、模块名、模块(长度)大小，从内核层安全获取模块地址，支持多线程
+	bool get_module_base(pid_t pid, void *buffer, char *name, size_t size);
+	
+	// 获取地址内存段，传入pid、接收指针(接收16字节)、目标地址、内存段权限、模块名、是否模糊(当前内存段不匹配则尽可能返回下一段匹配的内存段)，从内核层安全获取内存段，支持多线程
+	bool get_module_base(pid_t pid, void *buffer, uintptr_t addr, char *prot, char *name, bool fuzzy);
 	
 	// 硬件级读取数据，直接读硬件地址，传入地址、接收指针、类型大小，指数级安全，由于不使用CPU缓存，效率相应降低，支持单进程多线程，支持QGKI、GKI2.0+
 	bool read_safe(uintptr_t addr, void *buffer, size_t size);
 	
-    // 内核层读取数据，只读已映射到内核空间的地址，传入地址、接收指针、类型大小，读前记录CPU缓存状态，读完后恢复CPU缓存行状态，支持多线程，效率较高
+    // 内核层读取数据，只读已映射到内核空间的地址，传入地址、接收指针、类型大小，支持多线程，效率较高
 	bool read(uintptr_t addr, void *buffer, size_t size);
 	
 	// 内核层修改数据，只写已映射到内核空间的地址，传入地址、数据指针、类型大小，支持多线程
@@ -76,6 +79,30 @@ class Driver
 	template <typename T> bool write(uintptr_t addr, T value)
 	{
 		return this->write(addr, &value, sizeof(T));
+	}
+	
+	// 获取模块方法的封装 传入pid、模块名称，返回模块起始地址
+	uintptr_t get_module_base(pid_t pid, char *name)
+	{
+	    struct
+	    {
+	        uintptr_t start;
+	        uintptr_t end;
+	    } addr{};
+	    get_module_base(pid, &addr, name);
+	    return addr.start;
+	}
+	
+	// 获取模块方法的封装 传入pid、模块名称、模块长度，返回模块起始地址
+	uintptr_t get_module_base(pid_t pid, char *name, size_t size)
+	{
+	    struct
+	    {
+	        uintptr_t start;
+	        uintptr_t end;
+	    } addr{};
+	    get_module_base(pid, &addr, name, size);
+	    return addr.start;
 	}
 	
 	/*
@@ -106,7 +133,7 @@ class Driver
 	// 该方法将重置随机池，传入屏幕坐标x或者y，传入一个熵，熵越大越混乱，取值1 ~ 100，若每次传入的熵值不同，则重置随机池 ，返回一个随机x/y，一个循环中输入一个固定熵值即可，否则效率将无限降低
 	int uinput_rand(int val, int rand);
     
-	// 500+版本新增用户锁 同一时间只能有一个用户在操作驱动(单进程多线程，最大支持nproc/2个线程) 进程结束后delete或者主动调用destroy释放资源，释放驱动,否则下次运行可能失败
+	// 解锁并释放资源 同一时间只能有一个用户在操作驱动(单进程多线程，最大支持 nproc/2 个线程) 进程结束后delete或者主动调用destroy释放资源，释放驱动,否则下次运行可能失败
 	void destroy();
 };
 
