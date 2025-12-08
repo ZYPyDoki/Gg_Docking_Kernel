@@ -58,6 +58,12 @@
 // 获取系统内存页的大小
 #define PAGE_SIZE sysconf(_SC_PAGESIZE)
 
+// 获取半内存页大小大概0x500
+#ifndef PAGE_SIZE_2 
+#define PAGE_SIZE_2 0x500
+#endif
+
+
 // 全局指针，用于保存原始syscall函数的地址，以便在Hook函数中调用原始实现
 static long (*original_syscall_ptr)(long, ...) = nullptr;
 
@@ -175,21 +181,21 @@ static long vm_readv_custom(int pid, const iovec* local_iov, unsigned long liovc
             continue;
         }
 
-
-        if (local_iov[i].iov_len <= PAGE_SIZE){
-
-        // 调用驱动进行单块读取
-        // 注意：driver->read的返回值需要被检查，这里假设它总是成功
-        driver->read(
-            (uintptr_t)remote_iov[i].iov_base,
-            local_iov[i].iov_base,
-            local_iov[i].iov_len
-        );
-
+        uintptr_t remote_addr = (uintptr_t)remote_iov[i].iov_base;
+        char* local_buf = (char*)local_iov[i].iov_base;
+        size_t remaining = local_iov[i].iov_len;
+        
+        while (remaining > 0) {
+            size_t read_size = (remaining > PAGE_SIZE_2) ? PAGE_SIZE_2 : remaining;
+            
+            driver->read(remote_addr, local_buf, read_size);
+            
+            remote_addr += read_size;
+            local_buf += read_size;
+            total_read += read_size;
+            remaining -= read_size;
         }
-        total_read += local_iov[i].iov_len;
     }
-
 
     return total_read;
 }
