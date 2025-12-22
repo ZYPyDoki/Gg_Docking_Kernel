@@ -12,52 +12,43 @@ class Driver
 	// 类ID,记录类结束地址,作用同上
 	uint64_t uid;
 	
-    // 构造函数
+    // 构造方法
 	Driver()	
 	{
-		initkey("c6e5897e189076c420f75a6a358c04dd5c610b1c0db161a6892acd2e114572b5443473dc");
+		initkey("3b281334409adcd45d10992d82fd78973242c2bc6a81f2e8df01ecb86724db9c37a86d91");
 	}
 	
-    // 构析函数
+    // 构析方法
     ~Driver();
-    
+            
 	// 版本ID(密钥)，防止版本接口不一致导致内核崩溃，切勿随意更换
-	void initkey(char *key);		
-    	
-	// CPU亲和设置，指定运行在哪颗CPU上
-	void cpuset(int num);
+	void initkey(char *key);		    		
 	
-	// CPU亲和设置，指定范围随机运行在哪个CPU上，默认CPU0-CPU4
-	void cpuset(int start, int end);
+	// CPU亲和设置，cpuset(4)代表运行在CPU4上，cpuset(4,6)代表指定范围随机运行在CPU4-CPU6
+	static void cpuset(uint8_t start, uint8_t end = 0);
     
     // 初始化pid，创建一个读写对象务必要初始一次
-	void initpid(pid_t pid);
+	void initpid(pid_t pid);	
 	
-	// 获取进程pid，传入进程(包名)，从内核层安全获取pid
-	pid_t get_pid(char *name);
-	
-	// 重载方法，获取进程pid，传入进程(包名)，comm字段，适用于获取线程pid、以及部分混淆包名的应用，从内核层安全获取pid
-	pid_t get_pid(char *name, char *comm);
-	
-	// 获取模块地址，传入pid、接收指针、模块名，从内核层安全获取模块地址，支持多线程
-	bool get_module_base(pid_t pid, void *buffer, char *name);
-	
-	// 获取模块地址，传入pid、接收指针、模块名、模块(长度)大小，从内核层安全获取模块地址，支持多线程
-	bool get_module_base(pid_t pid, void *buffer, char *name, size_t size);
+	// 获取进程pid，传入进程(包名)，从内核层安全获取pid，当遇到加密混淆进程时可传入comm字段，参考/proc/pid/comm
+	pid_t get_pid(char *name, char *comm = nullptr);
+			
+	// 获取模块地址，传入pid、接收指针、模块名、模块(长度)大小，当size=0时默认取模块第一行，从内核层安全获取模块地址，支持多线程
+	bool get_module_base(pid_t pid, void *buffer, char *name, size_t size = 0);
 	
 	// 获取地址内存段，传入pid、接收指针(接收16字节)、目标地址、内存段权限、模块名、是否模糊(当前内存段不匹配则尽可能返回下一段匹配的内存段)，从内核层安全获取内存段，支持多线程
 	bool get_module_base(pid_t pid, void *buffer, uintptr_t addr, char *prot, char *name, bool fuzzy);
 	
-	// 硬件级读取数据，直接读硬件地址，传入地址、接收指针、类型大小，指数级安全，由于不使用CPU缓存，效率相应降低，支持单进程多线程，支持QGKI、GKI2.0+
+	// 硬件级读取数据，直接读硬件地址，传入地址、接收指针、类型大小，指数级安全，由于不使用CPU缓存，效率相应降低，支持单进程多线程，支持 >= 5.4.x
 	bool read_safe(uintptr_t addr, void *buffer, size_t size);
 	
-    // 内核层读取数据，只读已映射到内核空间的地址，传入地址、接收指针、类型大小，支持多线程，效率较高
+    // 内核层读取数据，只读已映射到内核空间的地址，传入地址、接收指针、类型大小，支持单进程多线程，效率较高, 支持 >= 4.9.x
 	bool read(uintptr_t addr, void *buffer, size_t size);
 	
 	// 内核层修改数据，只写已映射到内核空间的地址，传入地址、数据指针、类型大小，支持多线程
 	bool write(uintptr_t addr, void *buffer, size_t size);
 
-	// 模板方法，传入地址，返回地址上的值，支持多线程
+	// 模板方法，传入地址，返回地址上的值，支持多线程 PS：模板方法且仅适用于基本类型，至于为什么，多动脑想想...
 	template <typename T> T read_safe(uintptr_t addr)
 	{
 		T res{};
@@ -113,7 +104,7 @@ class Driver
 	    该方法为触摸事件初始化，要使用触摸事件必须要进行初始化，参数为分辨率宽和高，如1080x2340,即传入1080,2340
 	    以对象为最小单位，一个进程/线程可以使用一个或多个对象，但不能一个对象用于多线程。
 	*/
-	bool uinput_init(int width, int height);
+	bool uinput_init(uint16_t width, uint16_t height);
 	
 	/*
 	    传入屏幕坐标(x，y)，仅用于滑动事件，且最后一次调用后必须调用uinput_up进行抬起释放触摸点，否则将会出现卡屏/接触不良/无反应等等效果(参考你三根手指按在屏幕上，第四根滑后台，结果无法滑出)，若分辨率为1080x2340，竖屏下需要满足 0 < x && x < 1080, 0 < y && y < 2340 ，横屏下需要满足 0 < y && y < 1080, 0 < x && x < 2340
@@ -134,7 +125,7 @@ class Driver
 	int uinput_rand(int val, int rand);
     
 	// 解锁并释放资源 同一时间只能有一个用户在操作驱动(单进程多线程，最大支持 nproc/2 个线程) 进程结束后delete或者主动调用destroy释放资源，释放驱动,否则下次运行可能失败
-	void destroy();
+	void destroy();		
 };
 
 
