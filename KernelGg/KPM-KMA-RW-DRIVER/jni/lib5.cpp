@@ -160,11 +160,6 @@ static long vm_readv_custom(int pid, const iovec* local_iov, unsigned long liovc
         return -1;
     }
 
-    if (!driver)
-    {
-        driver = std::make_unique<Driver>();
-        
-    }
 
     if (driver->gid)
     {
@@ -448,4 +443,13 @@ static void init_hook_thread() {
     } else {
         pthread_detach(hook_thread);
     }
+
+
+    if (!driver)
+    {
+        driver = std::make_unique<Driver>();
+        
+    }
+
+
 }
