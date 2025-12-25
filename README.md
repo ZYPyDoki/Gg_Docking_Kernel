@@ -68,3 +68,19 @@ cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-n
 -   **版本区别**：
     -   **96 版**：`lib5.so.primary` 文件大小约为 **3.9 MB**。
     -   **101 版**：需要在本项目的 `101version` 文件夹下找到 `lib5.so.primary` 进行替换，文件大小约为 **4.4 MB**。
+
+---
+## 💖 赞助支持
+
+如果这个项目对你有帮助，欢迎请作者喝杯咖啡☕，支持项目的持续发展。
+感谢您的支持！您的赞助将激励我持续改进这个项目。
+
+### 扫码赞助
+<div align="center">
+    <img src="./WeChatPaymentQRCode.jpg" width="300" alt="微信赞赏码"/>
+    <img src="./AlipayCollectionCode.jpg" width="300" alt="支付宝收款码"/>
+    <br>
+    <sub>微信（左） | 支付宝（右）</sub>
+</div>
+
+---
