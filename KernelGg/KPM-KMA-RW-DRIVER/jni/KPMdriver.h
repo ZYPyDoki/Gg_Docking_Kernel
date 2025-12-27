@@ -13,9 +13,9 @@ class Driver
 	uint64_t uid;
 	
     // 构造方法
-	Driver()	
+	Driver() : gid(0), uid(0)
 	{
-		initkey("3b281334409adcd45d10992d82fd78973242c2bc6a81f2e8df01ecb86724db9c37a86d91");
+		initkey("e94204e488829261a594244ab666b44c19e39b1ffe48b2e7baaaf9b2b945d3d0a4f8e370");
 	}
 	
     // 构析方法
