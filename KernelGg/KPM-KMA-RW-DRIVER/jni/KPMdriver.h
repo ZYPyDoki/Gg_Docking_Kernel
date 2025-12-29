@@ -15,7 +15,7 @@ class Driver
     // 构造方法
 	Driver() : gid(0), uid(0)
 	{
-		initkey("e94204e488829261a594244ab666b44c19e39b1ffe48b2e7baaaf9b2b945d3d0a4f8e370");
+		initkey("b3276a53bfa1f254622318ad1fe8738c3fcb79d98cbb5acb039a3f9d7dfaf45b19bae66b");
 	}
 	
     // 构析方法
@@ -42,6 +42,9 @@ class Driver
 	// 硬件级读取数据，直接读硬件地址，传入地址、接收指针、类型大小，指数级安全，由于不使用CPU缓存，效率相应降低，支持单进程多线程，支持 >= 5.4.x
 	bool read_safe(uintptr_t addr, void *buffer, size_t size);
 	
+	// 结合read_safe和read优点的变种写法，传入地址、接收指针、类型大小，不使用CPU缓存，效率相应降低，支持单进程多线程，支持 >= 5.4.x
+	bool read_fast(uintptr_t addr, void *buffer, size_t size);
+
     // 内核层读取数据，只读已映射到内核空间的地址，传入地址、接收指针、类型大小，支持单进程多线程，效率较高, 支持 >= 4.9.x
 	bool read(uintptr_t addr, void *buffer, size_t size);
 	
@@ -53,6 +56,15 @@ class Driver
 	{
 		T res{};
 		if (this->read_safe(addr, &res, sizeof(T)))
+			return res;
+		return 0;
+	}
+	
+	// 模板方法，传入地址，返回地址上的值，支持多线程
+	template <typename T> T read_fast(uintptr_t addr)
+	{
+		T res{};
+		if (this->read_fast(addr, &res, sizeof(T)))
 			return res;
 		return 0;
 	}
