@@ -21,7 +21,7 @@ class Driver
     // 构析方法
     ~Driver();
             
-	// 版本ID(密钥)，防止版本接口不一致导致内核崩溃，切勿随意更换
+	// 版本ID(密钥)，防止版本接口不一致导致内核崩溃，切勿随意更换，不需要手动调用
 	void initkey(char *key);		    		
 	
 	// CPU亲和设置，cpuset(4)代表运行在CPU4上，cpuset(4,6)代表指定范围随机运行在CPU4-CPU6
@@ -58,7 +58,7 @@ class Driver
 		if (this->read_safe(addr, &res, sizeof(T)))
 			return res;
 		return 0;
-	}
+	}		
 	
 	// 模板方法，传入地址，返回地址上的值，支持多线程
 	template <typename T> T read_fast(uintptr_t addr)
@@ -140,5 +140,51 @@ class Driver
 	void destroy();		
 };
 
+// 这是扩展类 看不懂去AI
+class Driver_EXT : public Driver
+{
+  public:
+    // 扩展后支持读取[1,+∞]字节
+    void read_safe_ext(uintptr_t addr, void *buffer, size_t size)
+    {        
+        uint8_t *src = (uint8_t *)buffer;
+        while (size >= 3072)
+        {
+            read_safe(addr, src, 3072);            
+            addr += 3072;
+            src  += 3072;
+            size -= 3072;            
+        }
+        read_safe(addr, src, size);
+    }
+    
+    // 扩展后支持读取[1,+∞]字节
+    void read_fast_ext(uintptr_t addr, void *buffer, size_t size)
+    {        
+        uint8_t *src = (uint8_t *)buffer;
+        while (size >= 3072)
+        {
+            read_fast(addr, src, 3072);            
+            addr += 3072;
+            src  += 3072;
+            size -= 3072;            
+        }
+        read_fast(addr, src, size);
+    }
+    
+    // 扩展后支持读取[1,+∞]字节
+    void read_ext(uintptr_t addr, void *buffer, size_t size)
+    {        
+        uint8_t *src = (uint8_t *)buffer;
+        while (size >= 16384)
+        {
+            read(addr, src, 16384);            
+            addr += 16384;
+            src  += 16384;
+            size -= 16384;            
+        }
+        read(addr, src, size);
+    }
+};
 
 #endif
