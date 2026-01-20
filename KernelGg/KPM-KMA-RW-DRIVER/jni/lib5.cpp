@@ -284,6 +284,7 @@ static uintptr_t get_module_base_addr(const char* module_name) {
  * @brief 通过修改GOT（全局偏移表）来Hook指定函数
  * @details 此函数解析ELF文件的动态链接信息，找到目标函数在GOT中的条目，
  *          然后修改其内容指向我们的Hook函数。
+ *          [修复] 添加了指令缓存刷新和严格的安全检查。
  * 
  * @param base_addr 目标模块的基地址
  * @param func_name 要Hook的函数名
@@ -297,7 +298,7 @@ bool hook_plt_got_by_addr(uintptr_t base_addr, const char* func_name, void* new_
         return false;
     }
 
-    // 验证ELF魔数，确保我们正在解析的是一个有效的ELF文件，防止访问无效内存导致崩溃
+    // 验证ELF魔数
     Elf64_Ehdr* ehdr = (Elf64_Ehdr*)base_addr;
     if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0) {
         LOGE("ELF magic number mismatch at %p. Not a valid ELF.", (void*)base_addr);
@@ -306,17 +307,15 @@ bool hook_plt_got_by_addr(uintptr_t base_addr, const char* func_name, void* new_
 
     // 获取程序头表
     Elf64_Phdr* phdr = (Elf64_Phdr*)(base_addr + ehdr->e_phoff);
-    // 用于存储从动态段中解析出的关键信息
     Elf64_Addr rela_dyn_offset = 0, rela_plt_offset = 0;
     Elf64_Word rela_dyn_count = 0, rela_plt_count = 0;
-    Elf64_Sym* symtab = nullptr; // 符号表
-    char* strtab = nullptr;     // 字符串表
+    Elf64_Sym* symtab = nullptr;
+    char* strtab = nullptr;
 
-    // 遍历程序头，找到PT_DYNAMIC类型的动态段
+    // 遍历程序头，找到PT_DYNAMIC
     for (int i = 0; i < ehdr->e_phnum; ++i) {
         if (phdr[i].p_type == PT_DYNAMIC) {
             Elf64_Dyn* dyn = (Elf64_Dyn*)(base_addr + phdr[i].p_vaddr);
-            // 遍历动态段中的条目，提取符号表、字符串表和重定位表信息
             for (int j = 0; dyn[j].d_tag != DT_NULL; ++j) {
                 switch (dyn[j].d_tag) {
                 case DT_RELA:       rela_dyn_offset = dyn[j].d_un.d_ptr; break;
@@ -327,7 +326,7 @@ bool hook_plt_got_by_addr(uintptr_t base_addr, const char* func_name, void* new_
                 case DT_STRTAB:     strtab = (char*)(base_addr + dyn[j].d_un.d_ptr); break;
                 }
             }
-            break; // 找到动态段后即可退出循环
+            break;
         }
     }
 
@@ -336,46 +335,67 @@ bool hook_plt_got_by_addr(uintptr_t base_addr, const char* func_name, void* new_
         return false;
     }
 
-    // 使用lambda表达式来封装查找和Hook的逻辑，避免代码重复
+    // Lambda 表达式：查找和Hook逻辑
     auto find_and_hook = [&](Elf64_Rela* rela_table, Elf64_Word count) -> bool {
         for (Elf64_Word i = 0; i < count; ++i) {
-            // 从重定位条目中获取符号表索引
             Elf64_Sym* sym = &symtab[ELF64_R_SYM(rela_table[i].r_info)];
-            // 比较符号名，找到目标函数
             if (strcmp(strtab + sym->st_name, func_name) == 0) {
                 DLOG("Found symbol '%s' at rela index %d", func_name, i);
-                // 计算GOT条目的虚拟地址
+                
                 void* got_entry = (void*)(base_addr + rela_table[i].r_offset);
-                if (original_func) *original_func = *(void**)got_entry;
 
-                // 修改内存页权限为可写，这是Hook的关键步骤
+                // --- 新增：安全检查 1：GOT 条目地址对齐验证 ---
+                // 在 ARM 架构上，非对齐的内存访问可能导致崩溃
+                if ((uintptr_t)got_entry & (sizeof(void*) - 1)) {
+                    LOGE("Hook failed: GOT entry %p is not aligned for '%s'", got_entry, func_name);
+                    return false;
+                }
+
+                // 保存原始函数地址
+                void* original_addr = *(void**)got_entry;
+                if (original_func) *original_func = original_addr;
+
+                // --- 新增：安全检查 2：原始函数地址有效性验证 ---
+                // 如果原始地址为空，说明该函数尚未解析（懒绑定），直接Hook可能导致问题
+                if (original_addr == nullptr) {
+                    LOGE("Hook failed: Original function address for '%s' is NULL (Unresolved symbol?)", func_name);
+                    return false;
+                }
+
+                // 修改内存页权限为可写
                 uintptr_t page_addr = PAGE_START((uintptr_t)got_entry);
                 if (mprotect((void*)page_addr, PAGE_SIZE, PROT_READ | PROT_WRITE) != 0) {
                     LOGE("mprotect failed for %p: %s", (void*)page_addr, strerror(errno));
-                    return false; // 优化：明确返回失败
+                    return false;
                 }
 
-                DLOG("Replacing GOT entry %p (original: %p) with %p", got_entry, *original_func, new_func);
-                // 将GOT条目中的地址替换为我们的Hook函数地址
+                DLOG("Replacing GOT entry %p (original: %p) with %p", got_entry, original_addr, new_func);
+                
+                // 执行写入操作
                 *(void**)got_entry = new_func;
 
-                // 恢复内存页权限为可读可执行，这是一个良好的安全实践
+                // --- 核心修复：刷新指令缓存 ---
+                // 在修改了持有代码指针的内存区域后，必须调用此函数同步 I-Cache 和 D-Cache
+                // 否则 CPU 可能会执行缓存的旧指令，导致崩溃
+                __builtin___clear_cache((char*)got_entry, (char*)got_entry + sizeof(void*));
+
+                // 恢复内存页权限
                 if(mprotect((void*)page_addr, PAGE_SIZE, PROT_READ | PROT_EXEC) != 0) {
                     LOGE("mprotect (restore) failed for %p: %s", (void*)page_addr, strerror(errno));
-                    // 即使恢复失败，Hook也已生效，但应记录错误
                 }
-                return true; // Hook成功
+                
+                return true;
             }
         }
-        return false; // 在当前重定位表中未找到
+        return false;
     };
 
-    // 优先在.JMPREL（通常用于PLT Hook）中查找
+    // 优先在.JMPREL中查找
     if (rela_plt_count > 0) {
         Elf64_Rela* rela_plt = (Elf64_Rela*)(base_addr + rela_plt_offset);
         if (find_and_hook(rela_plt, rela_plt_count)) return true;
     }
-    // 如果没找到，再在.RELA（通常用于直接绑定）中查找
+    // 然后在.RELA中查找
     if (rela_dyn_count > 0) {
         Elf64_Rela* rela_dyn = (Elf64_Rela*)(base_addr + rela_dyn_offset);
         if (find_and_hook(rela_dyn, rela_dyn_count)) return true;
