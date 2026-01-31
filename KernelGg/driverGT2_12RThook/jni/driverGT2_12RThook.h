@@ -15,8 +15,8 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <string.h>
-#include <iostream>  // 添加这个以使用 std::cerr
-#include <cstdint>   // 添加这个以使用 uintptr_t
+#include <iostream>
+#include <cstdint>
 
 
 
@@ -134,7 +134,33 @@ public:
 void hide_process() { ioctl(fd, OP_HIDE_PROCESS); }
 };
 
-static c_driver *driver = new c_driver();
+static c_driver *driver = nullptr;
+
+// 全局驱动清理
+static void release_global_driver() {
+    if (driver != nullptr) {
+        delete driver;
+        driver = nullptr;
+        printf("[*] 全局driver已释放！\n");
+    }
+}
+
+// 注册程序退出时的清理函数
+__attribute__((constructor)) 
+static void reg_init_func() {
+
+    // 使用 nothrow，失败时返回 nullptr
+    driver = new (std::nothrow) c_driver();
+
+    if (driver == nullptr) {
+        printf("[!] driver 分配失败\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("[-] driver 初始化成功\n");
+
+    atexit(release_global_driver);
+}
 
 /*--------------------------------------------------------------------------------------------------------*/
 

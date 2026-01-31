@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# 获取脚本所在的目录
+SCRIPT_DIR="$(dirname "$0")"
+
+export LD_LIBRARY_PATH="${SCRIPT_DIR}:${LD_LIBRARY_PATH}"
+export LD_PRELOAD="${SCRIPT_DIR}/libKernelGg.so"
+
+
+exec "$0.primary" "$@"

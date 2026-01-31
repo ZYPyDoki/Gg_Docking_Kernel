@@ -1,87 +1,249 @@
-✈️Tg🛫：@ZYChats
+<p align="center">
+  <img src="https://img.shields.io/badge/Android-ARM64%20Only-brightgreen?style=flat-square&logo=android" alt="Platform">
+  <img src="https://img.shields.io/badge/Kernel-10%2B%20Drivers-blue?style=flat-square&logo=linux" alt="Drivers">
+  <img src="https://img.shields.io/badge/Hook-Universal%20Syscall%20270-red?style=flat-square&logo=hook" alt="Hook">
+</p>
 
-**Language**: [English.md](README_EN.md)
+<h1 align="center">🚀 Gg_Docking_Kernel</h1>
+<p align="center"><b>Universal Kernel Driver Hook Framework for Android</b></p>
+<p align="center">使任意可执行文件对接内核驱动 | 支持10+种驱动的通用Syscall 270钩子框架</p>
 
+<p align="center">
+  ✈️ Telegram: <a href="https://t.me/ZYChats">@ZYChats</a> | 
+  🌐 <a href="README_EN.md">English</a>
+</p>
 
-# 🚀 Gg_Docking_Kernel
-> 使 GG 修改器对接内核驱动，实现内核级内存读取，绕过大部分内存搜索检测。
 ---
+
+## 🔥 核心特性
+
+### 1. Universal Hook 架构 (新)
+**突破性的全局Hook能力** —— 不再局限于 `lib5.so`，现在可以Hook系统中**任意可执行二进制文件**只要其调用了 syscall 270 (`process_vm_readv`)。
+
+- 🎯 **第三方辅助内核化**: 为未更新驱动的辅助科技作者提供内核级内存读取能力
+- 🔑 **密钥预更新**: 驱动作者已更新密钥但主程序未跟进？提前编译hook层无缝切换新驱动
+- 🛡️ **零侵入改造**: 无需修改目标应用源码，动态替换系统调用实现内存读取
+
+### 2. 十大驱动生态 (新)
+全面支持 **KPM内核模块** 与 **KO临时驱动** 两大类别，共10种行业主流驱动方案。
+
+---
+
 ## 📦 支持的驱动类型
-| 驱动名称 | 描述 | 特点 |
-| :--- | :--- | :--- |
-| `KPM-KMA-RW-DRIVER` | 内核管理器可用的内核模块 | 硬件级读取 |
-| `driverGT1_567RTdev` | GT 驱动和 RT 驱动的 dev 方案 | 兼容性高 |
-| `driverGT2_12RThook` | GT 驱动和 RT 驱动的 hook 方案 | 隐秘性高 |
-| `driverDitNetlink_Prohook` | 巴巴托斯连理枝驱动 | 吃坤挂哥爱用 |
+
+### KPM 内核模块 (Kernel Persistent Module)
+稳定高效，适合长期使用场景。
+
+| 驱动名称 | 作者/来源 | 特点 | 状态 |
+|:---|:---|:---|:---|
+| `KPM-KMA-RW-DRIVER` | King777 | 最老牌的kpm内存读写模块，更新迭代了几十个版本，最稳定兼容高效隐蔽。缺点：时常关服务器后台断更。 | 行业标杆 |
+| `ditProKpm` | 巴巴托斯作者 | 2026年初新作，衍生方案 | 新兴主流 |
+| `KpmApReadioctl` | 溺 | 早期Apatch-read元老级方案 | 经典稳定 |
+| `KpmMemoryioctlhook` | 不知名人士 | 开源接口，便于对接开发 | 开放包容可对接 |
+| `KpmTearioctlhook` | 阿夜 & 泪心 | 著名的fastcan基址扫描工具作者和著名的王者科技作者在2026年共同研发的kpm内存读写模块。 | 强强联手 |
+
+### KO 临时驱动 (Kernel Object)
+临时加载，灵活性高，适合特定场景。
+
+| 驱动名称 | 作者/来源 | 接口类型 | 特点 |
+|:---|:---|:---|:---|
+| `driverParadise` | Cycle1337 | hook | 基于开源Hook迭代优化，瓦/八宝粥科技作者 |
+| `driverDitNetlink` | 巴巴托斯 | Netlink | 2024年前后开发，连理枝方案基础驱动 |
+| `driverQX114` | 雪花科技 | 雪花 | 世面最早最广的KO驱动方案，江晚开源基础上修改迭代 |
+| `driverGT1_567RTdev` | 忘川/RT | Dev节点 | GT 1.5/1.6/1.7 + RT 驱动，兼容性强 |
+| `driverGT2_12RThook` | 忘川/RT | Hook | GT 2.1/2.2 + RT 驱动，隐秘性高 |
+
 ---
-## 🛠️ 使用已编译版本
-1.  进入 `Compiled_finished_product` 文件夹。
-2.  找到您想使用的驱动对应的文件夹。
-3.  将该文件夹内的**全部内容**移动并替换到 GG 修改器的私有目录下。
-    **示例路径：**
-    ```
-    /data/user/0/com.apocalua.run/files/AppHidden-85uS/
-    ```
-> **⚠️ 注意**：每个 GG 修改器的包名不同，其私有目录的名称也可能不同。
+
+## 🏗️ 技术架构
+
+### 传统方案 vs Universal Hook
+```
+
+传统方案 (lib5.cpp)          Universal Hook (lib5native_hook.cpp)
+│                              │
+▼                              ▼
+┌──────────────┐               ┌──────────────────┐
+│  仅Hook lib5.so │            │  Hook 任意ELF     │
+│  process_vm_readv│           │  syscall 270     │
+└──────────────┘               └──────────────────┘
+│                              │
+└──────────┬───────────────────┘
+▼
+┌────────────────┐
+│  10种内核驱动切换层  │
+│  (KPM/KO双模式)    │
+└────────────────┘
+│
+▼
+┌────────────────┐
+│  硬件级内存读取    │
+│  绕过用户态检测   │
+└────────────────┘
+
+```
+
+### 代码实现演进
+- **旧版 (`lib5.cpp`)**: 针对 `lib5.so.primary` 的GOT表Hook，单文件硬编码
+- **新版 (`lib5native_hook.cpp`)**: 
+  - 使用 `dlsym(RTLD_NEXT, "syscall")` 实现全局符号拦截
+  - 支持动态PID切换与线程安全初始化 (双重检查锁定)
+  - 内存合并算法优化，减少驱动上下文切换
+  - 纯AArch64汇编fallback，保证稳定性
+
 ---
-## 🔨 自行编译项目
-### 📋 环境准备
--   准备好 Android NDK 环境。
-### 📝 编译步骤
-**第一步：准备源码**
--   将项目对应驱动的源码文件夹下载并解压到一个空目录下。
--   修改 `build.sh` 文件中的 NDK 路径，将其替换为您本机的 `ndk-build` 所在目录。
-    **示例：**
-    ```sh
-    # 将此路径
-    /data/user/0/com.termux/files/home/android-ndk/ndk/29.0.14206865/ndk-build
-    # 替换为你的路径，例如：
-    /home/user/android-ndk/ndk/25.2.9519653/ndk-build
-    ```
-**第二步：进入目录**
--   使用 `cd` 命令进入源码目录。
-    ```sh
-    cd /path/to/your/source/folder
-    ```
-**第三步：执行编译**
--   运行编译脚本。
-    ```sh
-    ./build.sh
-    ```
-**最后一步：获取成果**
--   等待提示“项目编译完成”。编译产物 `libKernelGg.so` 将生成在 `build.sh` 所在目录的 `libs/arm64-v8a/` 文件夹下。
+
+## 🛠️ 快速开始
+
+### 方案A：使用预编译版本
+1. 进入 `Compiled_finished_product` 文件夹
+2. 选择对应驱动的子文件夹
+3. **全部内容**移动并替换到目标应用的私有目录
+
+**标准路径示例**：
+```bash
+/data/user/0/catch_.me_.if_.you_.can_/files/GG-7E6k/
+```
+
+> ⚠️ 注意: 每个 GG 修改器的包名不同，其私有目录的名称也肯定不同，不要直接复制粘贴而是根据自己的实际情况去找。
+
+方案B：Universal Hook 注入 (新)
+适用于为第三方应用注入内核驱动能力：
+
+```bash
+
+# 获取脚本所在的目录
+SCRIPT_DIR="$(dirname "$0")"
+
+export LD_LIBRARY_PATH="${SCRIPT_DIR}:${LD_LIBRARY_PATH}"
+export LD_PRELOAD="${SCRIPT_DIR}/libKernelGg.so"
+
+# 你的可执行二进制程序文件路径(比如当前同路径相对路径下的./main文件)
+exec "./main" "$@"
+
+```
+
 ---
-## 💡 实现原理
-> 来源：enen 大牛的思路。
+
+🔨 自行编译
+
+环境准备
+- Android NDK (推荐 r25+ 或 r28c)
+- Linux/macOS/Termux 构建环境
+- AArch64 架构支持 (`__aarch64__`)
+
+编译步骤
+
+1. 源码配置
+
+```bash
+# 克隆项目后，根据你想要编译的对应目标驱动文件夹名称进入
+git clone https://github.com/ZYPyDoki/Gg_Docking_Kernel
+
+```
+
+2. 修改构建配置
+编辑 `build.sh`，替换NDK路径：
+
+```bash
+# 原路径
+/data/user/0/com.termux/files/home/android-ndk/ndk/29.0.14206865/ndk-build
+# 改为你的路径，例如：
+/home/user/android-ndk/ndk/25.2.9519653/ndk-build
+```
+
+3. 执行编译
+
+```bash
+cd /path/to/source
+chmod +x build.sh
+./build.sh
+```
+
+4. 获取产物
+- 输出文件：`libs/arm64-v8a/libKernelGg.so`
+- 提示"项目编译完成"后即可使用
+
+---
+
+💡 实现原理
+
+> 致谢：enen 大牛的原始思路
 >
 > 在 GG 修改器加载其原生文件读写库 `lib5.so` 之前，抢先加载一个我们准备的共享库。加载完毕后，再让 GG 加载其原始的 `lib5.so`。通过这种方式，我们能够 **Hook 系统调用号 270**，从而将 `lib5.so` 中的文件读取操作，替换为通过内核驱动进行读取的方式。
+
+内存读取流程劫持
+1. 注入时机: 在目标应用加载原生库前，抢先加载 `libKernelGg.so`
+2. 符号劫持: 通过 `RTLD_NEXT` 拦截 `syscall` 符号，重定向到自定义实现
+3. 调用转换: 当检测到 syscall 号 270 (`__NR_process_vm_readv`) 时：
+   - 解析 `iovec` 结构体参数
+   - 合并连续内存块 (优化策略)
+   - 调用内核驱动接口替代标准系统调用
+4. 透明回退: 非目标调用直接透传至原始syscall，保证应用其他功能正常
+
+为什么选择 Syscall 270?
+`process_vm_readv` 是Linux标准的跨进程内存读取接口，游戏修改器、辅助工具普遍使用此接口进行内存搜索。Hook此调用点可实现：
+- ✅ 无感知替换底层实现
+- ✅ 上层业务逻辑零修改
+- ✅ 天然支持所有调用该接口的程序
+
 ---
-## 📚 NDK 安装指南
-**视频教程：** [https://b23.tv/ljTKIDV](https://b23.tv/ljTKIDV)
-**一键安装命令 (适用于 aarch64 架构的 Linux)：**
-```sh
-cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-ndk-r28c-aarch64-linux-android.tar.xz && mkdir android-ndk && mkdir android-ndk/ndk && mv android-ndk-r28c 28.2.13676358 && mv 28.2.13676358 android-ndk/ndk/ && ln -s $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64 && ln -s $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-x86_64 && echo 'Installation Finished. Ndk has been installed successfully!'
+
+📚 NDK 安装指南
+
+视频教程: [Bilibili Tutorial](https://b23.tv/ljTKIDV)
+
+一键安装 (Linux aarch64):
+
+```bash
+cd && tar -xvf android-ndk-r28c-aarch64-linux-android.tar.xz && rm -rf android-ndk-r28c-aarch64-linux-android.tar.xz && mkdir -p android-ndk/ndk && mv android-ndk-r28c 28.2.13676358 && mv 28.2.13676358 android-ndk/ndk/ && ln -s $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64 && ln -s $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-aarch64 $HOME/android-ndk/ndk/28.2.13676358/prebuilt/linux-x86_64 && echo '✅ NDK Installation Finished!'
 ```
----
-## ⚠️ 重要注意事项
--   **内核 GT 版驱动**：需要将驱动文件解压到根目录（如 `/data/local/`），并授予 `777` 执行权限，同时将所有者和用户组设置为 `root:0`。
--   **文件权限**：替换文件后，务必将文件权限设置为 `777`，并将所有者用户组改为 GG 修改器自己的用户组。
--   **版本区别**：
-    -   **96 版**：`lib5.so.primary` 文件大小约为 **3.9 MB**。
-    -   **101 版**：需要在本项目的 `101version` 文件夹下找到 `lib5.so.primary` 进行替换，文件大小约为 **4.4 MB**。
 
 ---
+
+⚠️ 重要注意事项
+
+驱动部署权限 (关键)
+- 带有load.sh的内核ko驱动: 必须解压到根目录 (如 `/data/local/`)，授予 `777` 权限，所有者用户组 `root:0`
+- 文件权限: Hook库替换后，务必设置权限 `777`，所有者用户组root0或目标应用
+
+版本兼容性
+
+版本	目标文件	文件大小	存放位置	
+96版	`lib5.so.primary`	3.9 MB	项目根目录	
+101版	`lib5.so.primary`	4.4 MB	`101version/` 文件夹	
+
+Universal Hook 特别说明
+- 作用域: 由于使用 `RTLD_NEXT`，需确保本库比目标库先加载
+- 线程安全: 已实现 `pthread_mutex` 保护PID切换，多线程环境安全
+- 架构限制: 严格限定 `__aarch64__`，32位设备不支持
+
+
+---
+
+📜 更新日志
+
+2026.01 重大更新3.0版本
+- ✨ 新增5种驱动支持: 扩展至10种主流驱动生态
+- 🚀 Universal Hook 架构: 支持Hook任意可执行文件，不再局限于lib5.so
+- ⚡ 性能优化: 新增内存块合并算法，减少驱动上下文切换损耗
+- 🛡️ aarch64汇编兜底: syscall失败时自动回退内联汇编实现
+
+---
+
+🤝 贡献与支持鸣谢内核驱动模块开发者名单
+>(开玩笑的说：如出事儿被批捕的名单)
+>随机排序
+- [Dit](https://t.me/bbtswd)
+- [GT](https://t.me/GTnewdriver)
+- [RT](https://t.me/RTdrivers)
+- [Paradise](https://t.me/ParadiseKMA)
+- [QX](https://t.me/qxwmqd)
+- [KMA](https://discord.gg/y6nzS7TmuM)
+- [溺](https://github.com/niqiuqiux)
+- [阿夜](https://github.com/AYssu)
+- [泪心](https://t.me/TearGame)
+- 请遵守当地法律法规，本工具仅供学习交流使用
+
 ## 💖 赞助支持
-
-如果这个项目对你有帮助，欢迎请作者喝杯咖啡☕，支持项目的持续发展。
-感谢您的支持！您的赞助将激励我持续改进这个项目。
-
-### 扫码赞助
-<div align="center">
-    <img src="./WeChatPaymentQRCode.jpg" width="300" alt="微信赞赏码"/>
-    <img src="./AlipayCollectionCode.jpg" width="300" alt="支付宝收款码"/>
-    <br>
-    <sub>微信（左） | 支付宝（右）</sub>
-</div>
-
----
+如果这个项目对你有帮助，欢迎[为爱发电💖请作者喝杯咖啡☕](https://afdian.com/a/zypyd)`https://afdian.com/a/zypyd`，支持项目的持续发展。感谢您的支持！您的赞助将激励我持续改进这个项目。
